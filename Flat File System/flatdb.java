@@ -143,11 +143,14 @@ public class flatdb {
 		//    -Perform a grep in the file sytem (grep -Rnsi)
 	}
 
-	// find element
+	// TODO
+	// 1. Clean up code - validate databases and collections before they are called in main method
 
-	// update element
+	// 2. find element
 
-	// delete element
+	// 3. update element
 
-	// delete all elements
+	// 4. delete element
+
+	// 5. delete all elements
 }
