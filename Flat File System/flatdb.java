@@ -100,7 +100,7 @@ public class flatdb {
 	public static void createCollection (String databaseName, String collectionName) {
 		String newCollectionPath = "./" + databaseName + "/" + collectionName;
 		File newCollection = new File(newCollectionPath);
-		System.out.println(newCollectionPath + "\texists: " + newCollection.exists());
+		
 		if (!newCollection.exists()) {
 			try {
 				
@@ -108,6 +108,10 @@ public class flatdb {
 			} catch (IOException io) {
 			
 			}
+
+			System.out.println("The " + collectionName + " has successfully been created on the " + databaseName + ".\n" +
+							   "Path: " + newCollectionPath);
+
 		} else {
 			System.out.println("The " + collectionName + " collection already exists in this database! \n" + 
 							   "Try using another name for the collection you wish to create.");
