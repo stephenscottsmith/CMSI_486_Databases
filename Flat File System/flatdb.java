@@ -124,6 +124,7 @@ public class flatdb {
 	}
 
 	public static void addRecord (String databaseName, String collectionName, String record) {
+		// Cite: http://stackoverflow.com/questions/1625234/how-to-append-text-to-an-existing-file-in-java
 		try {
 			File collection = new File("./" + databaseName + "/" + collectionName);
 			FileWriter writer = new FileWriter(collection, true);
@@ -132,20 +133,15 @@ public class flatdb {
 		} catch (IOException ioe) {
 			// throw new IOException("Record add was unsuccessful!");
 		}
-
-
 	}
 
-
-
-	// TODO
-	// add new element
-	// // http://stackoverflow.com/questions/1625234/how-to-append-text-to-an-existing-file-in-java
-	// try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("flat.txt", true)))) {
-	//     out.println(newRecord);
-	// } catch (IOException e) {
-	//     //exception handling left as an exercise for the reader
-	// }
+	public static void find () {
+		// Mike: 
+		// 1. Is my structure of my flat system ok?
+		// 2. Is there a certain way you want me to iterate over my collections?
+		//    -Open file and iterate over the text? perhaps with some regex
+		//    -Perform a grep in the file sytem (grep -Rnsi)
+	}
 
 	// find element
 
