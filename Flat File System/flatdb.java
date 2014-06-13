@@ -18,15 +18,13 @@ import java.util.Scanner;
 
 public class flatdb {
 	public static void main(String[] args) {
-		// String newRecord = Arrays.toString(args);
-		// System.out.println(newRecord);
 		String commandList = "exit\t\t: Exits the FlatDB system.\n" +
 							 "add\t\t: Adds new record.\n" + 
 							 "delete\t\t : Deletes a record.\n";
 
 		
 		
-		// http://stackoverflow.com/questions/12396765/continuous-input-commands
+		// Cite: http://stackoverflow.com/questions/12396765/continuous-input-commands
 		Scanner sc = new Scanner(System.in);
 
 		for (prompt(); sc.hasNextLine(); prompt()) {
@@ -61,6 +59,13 @@ public class flatdb {
 		    				   collectionName = commands[2];
 		    			createCollection(database, collectionName);
 		    			break;
+		    		case "addRecord" :
+		    			String db = commands[1],
+		    				   collection = commands[2],
+		    				   record = Arrays.toString(Arrays.copyOfRange(commands, 3, commands.length));
+		    			System.out.println(record);
+		    			addRecord(db, collection, record);
+		    			break;
 		    		default:
 		    			System.out.println("NO VALID COMMANDS ENTERED");
 		    	}
@@ -74,7 +79,7 @@ public class flatdb {
 
 	public static void createDatabase(String databaseName) {
 
-		// http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
+		// Cite: http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
 		File newDir = new File(databaseName);
 
 		if (!newDir.exists()) {
@@ -116,6 +121,19 @@ public class flatdb {
 			System.out.println("The " + collectionName + " collection already exists in this database! \n" + 
 							   "Try using another name for the collection you wish to create.");
 		}
+	}
+
+	public static void addRecord (String databaseName, String collectionName, String record) {
+		try {
+			File collection = new File("./" + databaseName + "/" + collectionName);
+			FileWriter writer = new FileWriter(collection, true);
+			writer.write((record + "\n"));
+			writer.close();
+		} catch (IOException ioe) {
+			// throw new IOException("Record add was unsuccessful!");
+		}
+
+
 	}
 
 
