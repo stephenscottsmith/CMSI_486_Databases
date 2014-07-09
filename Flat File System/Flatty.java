@@ -16,7 +16,7 @@ import java.io.InputStreamReader;
 
 import java.util.Scanner;
 
-public class flatdb {
+public class Flatty {
 	public static void main(String[] args) {
 		String commandList = "exit\t\t: Exits the FlatDB system.\n" +
 							 "add\t\t: Adds new record.\n" + 
@@ -40,7 +40,7 @@ public class flatdb {
 		    	continue;
 		    } else if (commands.length == 1) {
 		        if (commands[0].equalsIgnoreCase("exit")) {
-		        	System.out.println("Exiting FlatDB");
+		        	System.out.println("Exiting Flatty");
 		        	System.exit(0);
 		        } else {
 		        	System.out.println("Your command was not a valid FlatDB command! \n" + commandList);
