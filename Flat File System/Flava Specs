@@ -1,0 +1,66 @@
+Flava on Startup:
+1. Find data folder
+	a. If data folder exists:
+		-Populate global list of databases w/ string names
+		-Confirm that test database exists
+	b. If it doesn't exist, create it and create test database within it
+	c. Set global database to test
+2. Prompt
+
+
+
+
+
+Global database as to which database you can conduct CRUD on
+List of Commands:
+	1. Create
+		a. Databases (Directories)
+		b. Tables (Sub-directory of a database with a metadata file and a data file)
+		c. Index
+	2. Use (default to test like Mongo)
+	3. Insert
+	4. Delete
+	5. Select
+	6. Update
+
+What do commands look like?
+Command + Object (Database, Table, Index, Record)
+
+!!! WHEN USING "ON" IT IS IMPLIED THAT YOU ARE ALWAYS REFERRING TO A TABLE !!!
+
+Supported Commands:
+// CREATE
+-Create database "DB NAME"
+-Create table "TABLE NAME" (Schema) 				// Uses global current database
+-Create ON tablename index "INDEX NAME"  (Schema) 	// Uses global current database
+
+// DELETE
+-Delete database "DB NAME"							// If it's test, do not allow 
+													// If deleting current global
+													// delete it switch to test 
+-Delete database 									// Uses global current database
+-Delete table "TABLE NAME" 							// Uses global current database
+-Delete ON tableName index "INDEX NAME" 			// Uses global current database 
+-Delete ON tableName values (parameters)			// Uses global current database
+
+// INSERT
+-Insert ON tableName values (parameters)			// Uses global current database
+
+// SELECT
+-Select ON tableName values (parameters)
+
+// UPDATE
+-Update ON tableName values (parameters to find) (values to set)
+
+What do schema look like?
+Schema (columnName datatype, columnName datatype)
+
+Supported schema data types:
+
+
+What does the data look like when stored (Relational Document Store)?
+{column_1:string, column_2:long, column_3:double, column_4:char, column_5:document}
+
+
+
+
