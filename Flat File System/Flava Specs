@@ -7,7 +7,9 @@ Flava on Startup:
 	c. Set global database to test
 2. Prompt
 
-
+Files Extenstions:
+-Databases: .fdb (Flava Database File)
+-Tables: .ftl (Flava Table)
 
 
 
