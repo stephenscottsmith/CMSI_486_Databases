@@ -75,11 +75,11 @@ public class Flava {
 		// 	b. If it doesn't exist, create it and create test database within it
 		// c. Set global database to test
 		String [] databases;
-		if (directoryExists("data")) {
+		if (directoryExists("./data")) {
 
 		} else {
-			createDirectory("data");
-			createDirectory("./data/test.fdf");
+			createDatabaseItem("data", "folder", "data");
+			createDatabaseItem("./data/test.fdb", "database", "test" );
 		}
 
 	}
@@ -90,34 +90,36 @@ public class Flava {
 	}
 
 	public static void createDatabase (String databaseName) {
-		createDirectory("./data/" + databaseName + ".fdb");
+		createDatabaseItem(("./data/" + databaseName + ".fdb"), "database", databaseName);
 	}
 
 	public static void createTable (String databaseName, String tableName) {
-		createDirectory(("./data/" + databaseName + ".fdb/" +  tableName), false);
+		createDatabaseItem(("./data/" + databaseName + ".fdb/" +  tableName + ".ftl"), "table", tableName);
 	}
 
-	public static void createDirectory (String directoryPath, Boolean isDatabase) {
+	public static void createDatabaseItem (String directoryPath, String type, String name) {
 		// Cite: http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
-		File newDir = new File(databaseName);
+		File newDir = new File(directoryPath);
 
 		if (!newDir.exists()) {
-		    System.out.println("Attempting to create database: " + databaseName + "...");
-		    boolean createDBResult = false;
+		    System.out.println("Attempting to create " + type + ": "  + name + "...");
 
 		    try {
 		        newDir.mkdir();
-		        createDBResult = true;
+		        if (type == "table") {
+		        	try {
+		        		newDir.createNewFile();
+		        	} catch (IOException io) {
+		        		//throw new IOException("Cannot create table!");
+		        	}	
+		        }
 		    } catch (SecurityException se) {
-		        //handle it
-		        throw new SecurityException("You may not have permissions to create a new database! Consult your IT.");
+		        throw new SecurityException("You may not have permissions to create a new " + type + "! Consult your IT.");
 		    }        
-		    if (createDBResult) {    
-		       System.out.println("Database " + databaseName + " has been successfully created.");  
-		    } 
-
+    
+	       	System.out.println("The " + type + " " + name + " has been successfully created.");  
 		} else {
-		    System.out.println("The " + databaseName + " database already exists! Try using another name.");
+		    System.out.println("The " + type + " " + name + " already exists! Try using another name.");
 		}
 	}
 
