@@ -7,9 +7,12 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
+import java.io.FilenameFilter;
 
 public class Flava {
-	private static String currentDatabase = "test";
+	private static String currentDatabase = "main.fdb";
+	private static String [] databaseArray;
+	private static String [] tableArray;
 
 	public static void main(String[] args) {
 		initiateStartup();
@@ -68,20 +71,50 @@ public class Flava {
 	}
 
 	public static void initiateStartup () {
-		// 1. Find data folder
-		// 	a. If data folder exists:
-		// 		-Populate global list of databases w/ string names
-		// 		-Confirm that test database exists
-		// 	b. If it doesn't exist, create it and create test database within it
-		// c. Set global database to test
-		String [] databases;
 		if (directoryExists("./data")) {
-
+			File databaseDirectory = new File("./data");
 		} else {
 			createDatabaseItem("data", "folder", "data");
-			createDatabaseItem("./data/test.fdb", "database", "test" );
+			createDatabaseItem("./data/test.fdb", "database", "test");
 		}
+	}
 
+	public static void printStringArray (String [] stringArray, String type) {
+		if (stringArray.length >= 1) {	
+			for (int i = 0; i < stringArray.length; i++) {
+				System.out.println(stringArray[i]);
+			}
+		} else {
+			System.out.println("There are currently 0 " + type + "s.");
+		}
+	}
+
+	public static void updateDatabasesArray (Boolean printArray) {
+		databaseArray = getFilesInPath(("./data/"), ".fdb");
+		printStringArray(databaseArray, "database");
+	}
+
+	public static void updateTablesArray () {
+		tableArray = getFilesInPath(("./data/" + currentDatabase), ".ftl");
+		printStringArray(tableArray, "table");
+	}
+
+	static class FilterAwareFilenameFilter implements FilenameFilter {
+		private final String filter;
+
+	    public FilterAwareFilenameFilter(String filter) {
+	        this.filter = filter;
+	    }
+
+	    @Override
+	    public boolean accept(File dir, String name) {
+	        return name.toLowerCase().endsWith(this.filter);
+	    }
+	}	
+
+	public static String [] getFilesInPath (String filePath, String filter) {
+		File directory = new File(filePath);
+		return directory.list(new FilterAwareFilenameFilter(filter));
 	}
 
 	public static boolean directoryExists (String path) {
@@ -130,30 +163,6 @@ public class Flava {
 	public static void invalidCommand () {
 		System.out.println("THE COMMAND YOU ENTERED CANNOT BE PARSED!");
 	}
-
-	// public static void create(String [] commands) {
-	// 	String objectToCreate = commands[0].toLowerCase();
-
-	// 	switch (objectToCreate) {
-	// 		case "database" :
-	// 			System.out.println("DATABASE");
-	// 			createDatabase(Arrays.copyOfRange(commands, 1, commands.length));
-	// 			break;
-	// 		case "table" :
-	// 			System.out.println("TABLE");
-	// 			break;
-	// 		case "index" :
-	// 			System.out.println("INDEX");
-	// 			break;
-	// 		default :
-	// 			System.out.println("THE OBJECT YOU ARE TRYING TO CREATE IS NOT A VALID OBJECT!");
-	// 			break;
-	// 	}
-
-	// }
-
-
-
 }
 
 

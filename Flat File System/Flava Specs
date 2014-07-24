@@ -18,8 +18,11 @@ List of Commands:
 	1. Create
 		a. Databases (Directories)
 		b. Tables (Sub-directory of a database with a metadata file and a data file)
-		c. Index
+		c. Indices (Folder in a table folder in case there are multiple?)
 	2. Use (default to test like Mongo)
+		a. List Databases
+		b. List tables
+		c. List indices 
 	3. Insert
 	4. Delete
 	5. Select
@@ -40,7 +43,7 @@ Supported Commands:
 -Delete database "DB NAME"							// If it's test, do not allow 
 													// If deleting current global
 													// delete it switch to test 
--Delete database 									// Uses global current database
+-Delete database "DATABASE NAME"					// Uses global current database
 -Delete table "TABLE NAME" 							// Uses global current database
 -Delete ON tableName index "INDEX NAME" 			// Uses global current database 
 -Delete ON tableName values (parameters)			// Uses global current database
@@ -53,6 +56,16 @@ Supported Commands:
 
 // UPDATE
 -Update ON tableName values (parameters to find) (values to set)
+
+// List
+-List databases
+-List tables 
+-List indices (table is parameter)
+
+// Use
+-Use (database is parameter)
+
+
 
 What do schema look like?
 Schema (columnName datatype, columnName datatype)
