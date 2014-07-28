@@ -10,6 +10,7 @@ Flava on Startup:
 Files Extenstions:
 -Databases: .fdb (Flava Database File)
 -Tables: .ftl (Flava Table)
+-Indices: .fix (Flava Index)
 
 
 
@@ -27,35 +28,34 @@ List of Commands:
 	4. Delete
 	5. Select
 	6. Update
+	7. List
 
 What do commands look like?
-Command + Object (Database, Table, Index, Record)
+Command + Object (Database, Table, Index) + Name Identifier 
 
 !!! WHEN USING "ON" IT IS IMPLIED THAT YOU ARE ALWAYS REFERRING TO A TABLE !!!
 
 Supported Commands:
 // CREATE
 -Create database "DB NAME"
--Create table "TABLE NAME" (Schema) 				// Uses global current database
--Create ON tablename index "INDEX NAME"  (Schema) 	// Uses global current database
+-Create table "TABLE NAME" schema (Schema) 				
+-Create ON "TABLE NAME" index "INDEX NAME" schema (parameters to schematize)
 
 // DELETE
--Delete database "DB NAME"							// If it's test, do not allow 
-													// If deleting current global
-													// delete it switch to test 
--Delete database "DATABASE NAME"					// Uses global current database
--Delete table "TABLE NAME" 							// Uses global current database
--Delete ON tableName index "INDEX NAME" 			// Uses global current database 
--Delete ON tableName values (parameters)			// Uses global current database
+-Delete database "DATABASE NAME"					
+-Delete table "TABLE NAME" 							
+-Delete ON tableName index "INDEX NAME" 			 
+-Delete ON tableName values (parameters to delete) where (parameters to find)			
 
 // INSERT
--Insert ON tableName values (parameters)			// Uses global current database
+-Insert ON tableName values (parameters to insert)			
 
 // SELECT
--Select ON tableName values (parameters)
+-Select ON tableName values (parameters to display) where (parameters to find)
 
 // UPDATE
--Update ON tableName values (parameters to find) (values to set)
+-Update ON tableName values (parameters to update) where (parameters to find)
+-Update ON tableName schema (parameters to schematize)
 
 // List
 -List databases
@@ -74,7 +74,7 @@ Supported schema data types:
 
 
 What does the data look like when stored (Relational Document Store)?
-{column_1:string, column_2:long, column_3:double, column_4:char, column_5:document}
+{column_1:string, column_2:long, column_3:double, column_4:char}
 
 
 

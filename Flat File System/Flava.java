@@ -1,82 +1,139 @@
 /*  
-This is a flat file database management system from the command line
-for my database system class (CMSI 486). I wrote it using Java 7. 
+	This is a flat file database management system from the command line
+	for my database system class (CMSI 486). I wrote it using Java 7. 
 **/
 
 import java.util.Scanner;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.io.FilenameFilter;
+import java.util.Collections;
 
 public class Flava {
-	private static String currentDatabase = "main.fdb";
+	private static String databaseDirectoryString = "./data/";
+	private static String databaseDirectory;
+	private static String currentGlobalDatabase = "test.fdb";
 	private static String [] databaseArray;
-	private static String [] tableArray;
+	// TODO: This is redundant b/c it's also in Parsecutor
+	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", "values", "schema"));
 
 	public static void main(String[] args) {
 		initiateStartup();
-
+ 
 		// Cite: http://stackoverflow.com/questions/12396765/continuous-input-commands
 		Scanner sc = new Scanner(System.in);
 
 		for (prompt(); sc.hasNextLine(); prompt()) {
+			try {
+			    String line = sc.nextLine().replaceAll("\n", "");
 
-		    String line = sc.nextLine().replaceAll("\n", "");
+			    // TODO 1: Tokenize arguments better 
+			    String [] commandTokens = line.split(" ");
+			    System.out.println(commandTokens.length);
+			    //printStringArray(commandTokens, "tokens");
 
-		    // split line into arguments
-		    String[] commands = line.split(" ");    
-
-		    // process arguments
-		    if (commands.length == 0) {
-		    	System.out.println("Continuing");
-		    	continue;
-		    } else if (commands.length == 1) {
-		        if (commands[0].equalsIgnoreCase("exit")) {
-		        	System.out.println("Exiting Flava");
-		        	System.exit(0);
-		        } else {
-		        	System.out.println("Your command was not a valid Flava command!"/* + commandList*/);
-		        }
-		    } else if (commands.length >= 2) {
-		        // Handle the parameters parameters
-		    	// String flatCommand = commands[0].toLowerCase();
-
-		    	// switch (flatCommand) {
-		    	// 	case "create" :
-		    	// 		// Can CREATE the following:
-		    	// 		// Datebase
-		    	// 		// Table
-
-		    	// 		create(Arrays.copyOfRange(commands, 1, commands.length));
-		    			
-		    	// 		break;
-		    	// 	case "delete" :
-		  
-		    	// 		break;
-		    	// 	case "update" :
-		  
-		    	// 		break;
-		    	// 	case "select" :
-		  
-		    	// 		break;
-		    	// 	case "insert" :
-		  
-		    	// 		break;
-		    	// 	default:
-		    	// 		invalidCommand();
-		    	// }
-		    } 
+			    // process arguments
+			    if (commandTokens.length <= 2) {
+				    if (commandTokens[0].equals("")) {
+				    	continue;
+				    } else if (commandTokens[0].equalsIgnoreCase("exit")) {
+			        	System.out.println("Exiting Flava");
+			        	System.exit(0);
+				    } else if (commandTokens[0].equalsIgnoreCase("list")) {
+				    	if (commandTokens[1].equalsIgnoreCase("databases") || commandTokens[1].equalsIgnoreCase("tables")) {
+				    		listItems(commandTokens[1]);
+				    	} else {
+				    		invalidCommand();
+				    	}
+				    } else if (commandTokens[0].equalsIgnoreCase("use")) {
+				    	changeGlobalDatabase(commandTokens[1]);
+				    } else if (line.equalsIgnoreCase("which db")) {
+				    	whichDatabase();
+				    } 
+				} else {
+			        
+			        commandTokens = tokenizeInput(line);
+			        System.out.println("Tokens to parse: " + commandTokens.length);
+			        FlavaSQLParsecutor.parseCommand(commandTokens);
+			    } 
+			} catch (Exception e) {
+				System.out.println("Unable to parse your command!");
+			}
 		}
 	}
 
 	public static void initiateStartup () {
-		if (directoryExists("./data")) {
-			File databaseDirectory = new File("./data");
-		} else {
-			createDatabaseItem("data", "folder", "data");
-			createDatabaseItem("./data/test.fdb", "database", "test");
+		if (!FlavaSQLParsecutor.directoryExists(databaseDirectoryString)) {
+			FlavaSQLParsecutor.createDatabaseItem(databaseDirectoryString, "folder", "data");
+			FlavaSQLParsecutor.createDatabaseItem("./data/test.fdb", "database", "test");
 		}
+		updateDatabaseArray();
+	}
+
+	public static String [] tokenizeInput (String input) {
+		String lowerCaseInput = input.toLowerCase(),
+			   tier1Commands = input;
+		int tokenArrayLength = 3;
+		Boolean containsOption = containsValidOption(input.toLowerCase()),
+				containsWhere = false;
+		String [] optionArray = new String[2]; 
+		String [] whereArray = new String[2];
+
+		if (containsOption) {
+			String option = determineValidOption(lowerCaseInput.toLowerCase()),
+				   optionCommands = input.substring(lowerCaseInput.indexOf(option), lowerCaseInput.length()),
+			       optionParameters = getParenthesisParameters(optionCommands),
+			       lowerCaseOptions = optionCommands.toLowerCase();
+			tier1Commands = input.substring(0, lowerCaseInput.indexOf(option));
+			tokenArrayLength += 2;
+			optionArray = new String [] {option, optionParameters};
+			containsWhere = lowerCaseOptions.contains("where");
+
+			if (containsWhere) {
+				String whereCommands = optionCommands.substring(lowerCaseOptions.indexOf("where")),
+				       whereParameters = getParenthesisParameters(whereCommands);
+			    tokenArrayLength += 2;
+
+			    whereArray = new String [] {"where", whereParameters};
+			}
+		}
+		
+		ArrayList<String> tokenList = new ArrayList<String>(Arrays.asList(tier1Commands.split(" ")));
+		tokenList.addAll(Arrays.asList(optionArray));
+		tokenList.addAll(Arrays.asList(whereArray));
+		tokenList.removeAll(Collections.singleton(null));
+		String [] commandTokens = tokenList.toArray(new String[tokenArrayLength]);
+		
+		return commandTokens;
+	}
+
+	public static String getParenthesisParameters (String command) {
+		try {
+			return command.substring(command.indexOf("("), command.indexOf(")") + 1);
+		} catch (Exception e) {
+			invalidCommand();
+		}
+		return "INVALID PARAMETERS";
+	}
+
+	public static String determineValidOption (String input) {
+		for (String option : validOptions) {
+			if (input.contains(option)) {
+				return option;
+			}	
+		}
+		return "NO OPTION";
+	}
+
+	public static Boolean containsValidOption (String input) {
+		for (String option : validOptions) {
+			if (input.contains(option)) {
+				return true;
+			}	
+		}
+		return false;
 	}
 
 	public static void printStringArray (String [] stringArray, String type) {
@@ -89,13 +146,17 @@ public class Flava {
 		}
 	}
 
-	public static void updateDatabasesArray (Boolean printArray) {
-		databaseArray = getFilesInPath(("./data/"), ".fdb");
+	public static void listDatabasesInEngine () {
+		updateDatabaseArray();
 		printStringArray(databaseArray, "database");
 	}
 
-	public static void updateTablesArray () {
-		tableArray = getFilesInPath(("./data/" + currentDatabase), ".ftl");
+	public static void updateDatabaseArray () {
+		databaseArray = getFilesInPath(("./data/"), ".fdb");
+	}
+
+	public static void listTablesOnDatabase () {
+		String [] tableArray = getFilesInPath(("./data/" + currentGlobalDatabase), ".ftl");
 		printStringArray(tableArray, "table");
 	}
 
@@ -117,45 +178,6 @@ public class Flava {
 		return directory.list(new FilterAwareFilenameFilter(filter));
 	}
 
-	public static boolean directoryExists (String path) {
-		File directory = new File(path);
-		return directory.exists();
-	}
-
-	public static void createDatabase (String databaseName) {
-		createDatabaseItem(("./data/" + databaseName + ".fdb"), "database", databaseName);
-	}
-
-	public static void createTable (String databaseName, String tableName) {
-		createDatabaseItem(("./data/" + databaseName + ".fdb/" +  tableName + ".ftl"), "table", tableName);
-	}
-
-	public static void createDatabaseItem (String directoryPath, String type, String name) {
-		// Cite: http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
-		File newDir = new File(directoryPath);
-
-		if (!newDir.exists()) {
-		    System.out.println("Attempting to create " + type + ": "  + name + "...");
-
-		    try {
-		        newDir.mkdir();
-		        if (type == "table") {
-		        	try {
-		        		newDir.createNewFile();
-		        	} catch (IOException io) {
-		        		//throw new IOException("Cannot create table!");
-		        	}	
-		        }
-		    } catch (SecurityException se) {
-		        throw new SecurityException("You may not have permissions to create a new " + type + "! Consult your IT.");
-		    }        
-    
-	       	System.out.println("The " + type + " " + name + " has been successfully created.");  
-		} else {
-		    System.out.println("The " + type + " " + name + " already exists! Try using another name.");
-		}
-	}
-
 	public static void prompt () {
 		System.out.print(">> ");
 	}
@@ -163,8 +185,30 @@ public class Flava {
 	public static void invalidCommand () {
 		System.out.println("THE COMMAND YOU ENTERED CANNOT BE PARSED!");
 	}
-}
 
+	/** listItems can list the databases in Flava or the tables of a specified database */
+	public static void listItems (String type) {
+		if (type.equals("databases")) {
+			listDatabasesInEngine();
+		} else if (type.equals("tables")) {
+			listTablesOnDatabase();
+		}
+	}
+
+	public static void changeGlobalDatabase (String newGlobalDatabase) {
+		newGlobalDatabase += ".fdb";
+		if (Arrays.asList(databaseArray).contains(newGlobalDatabase)) {
+			currentGlobalDatabase = newGlobalDatabase;
+			whichDatabase();
+		} else {
+			System.out.println("The database " + newGlobalDatabase + " does not exist in the system!");
+		}
+	}
+
+	public static void whichDatabase () {
+		System.out.println("Using " + currentGlobalDatabase);
+	}
+}
 
 
 
