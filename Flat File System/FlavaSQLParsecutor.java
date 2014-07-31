@@ -14,47 +14,78 @@ public class FlavaSQLParsecutor {
 	static ArrayList <String> validObjects = new ArrayList<String>(Arrays.asList("database", "table", "on"));
 	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", "values", "schema"));
 	ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList(""));
-	// What would it's properites be?
-	// 1. Main Command (i.e. Create, Delete, etc.)
-	// 2. Type (i.e. database, table, "on" is same thing as table)
-	// 3. Optional Token (i.e. index, values)
-	// 4. If 3 is present, then 4th property is necessary (i.e. index name, values)
 	
 	// What Happens:
-	// String is sent to Flava
-	// FlavaSQLParsecutor parse
+	// Tokenized string is sent to Parsecutor
+	// Parsecutor must then validate that the command is valid both syntatically
+	// and semantically
+	// Parsecutor then tries to execute the command
 
 	public FlavaSQLParsecutor () {
 
 	}
 
 	public static void parseCommand (String [] commandTokens) {
-		// Validate if command is a good command
+		// TODO 1: Validate command more
 		try {	
 			if (isCommandTokenLengthValid(commandTokens.length) &&
-				isValidToken(validCommands, commandTokens[0]) &&
-				isValidToken(validObjects, commandTokens[1])) {
+				validCommands.contains(commandTokens[0]) &&
+				validObjects.contains(commandTokens[1])) {
 				System.out.println("VALID COMMAND! YAY!");
+				
+				executeCommand(commandTokens);
 			} else {
 				System.out.println("FUCK");
 			}
 		} catch (Exception e) {
 			System.out.println("INVALID COMMAND ENTERED. TRY AGAIN.");
 		}
-		for (String s : commandTokens) {
-			System.out.println(s);
+		// for (String s : commandTokens) {
+		// 	System.out.println(s);
+		// }
+	}
+
+	public static void executeCommand (String [] commandTokens) {
+		String command = commandTokens[0].toLowerCase();
+		switch (command) {
+			case "create" :
+				create(commandTokens);
+				break;
+			case "delete" :
+				//delete();
+				break;
+			case "select" :
+				System.out.println("selecting");
+				break;
+			case "insert" :
+				System.out.println("inserting");
+				break;
+			case "update" :
+				System.out.println("updating");
+				break;
+
 		}
-		// If it is a valid command, then try to execute the command
+	}
+
+	public static void create (String [] commandTokens) {
+		String objectType = commandTokens[1].toLowerCase(),
+			   objectParameter = commandTokens[2];
+		switch (objectType) {
+			case "database" :
+				createDatabase(objectParameter);
+				break;
+			case "table" :
+				createTable(Flava.getCurrentGlobalDatabase(), objectParameter);
+				break;
+			case "on" :
+				System.out.println("NEED TO IMPLEMENT!");
+				break;
+		}
 	}
 
 	public static Boolean isCommandTokenLengthValid (int length) {
 		return (length == 3 || length == 5 || length == 7);
 	}
-
-	public static Boolean isValidToken (ArrayList<String> validTokens, String token) {
-		return validTokens.contains(token);
-	}
-
 
 	////////////////
 	public static boolean directoryExists (String path) {
@@ -62,28 +93,37 @@ public class FlavaSQLParsecutor {
 		return directory.exists();
 	}
 
+
+	// CREATE SECTION //
 	public static void createDatabase (String databaseName) {
 		createDatabaseItem(("./data/" + databaseName + ".fdb"), "database", databaseName);
 	}
 
 	public static void createTable (String databaseName, String tableName) {
-		createDatabaseItem(("./data/" + databaseName + ".fdb/" +  tableName + ".ftl"), "table", tableName);
+		System.out.println(("./data/" + databaseName + ".fdb/" +  tableName + ".ftl"));
+		System.out.println(tableName);
+		createDatabaseItem(("./data/" + databaseName + "/" +  tableName + ".ftl"), "table", tableName);
 	}
 
 	public static void createDatabaseItem (String directoryPath, String type, String name) {
 		// Cite: http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
-		File newDir = new File(directoryPath);
+		File typeFolder = new File(directoryPath);
 
-		if (!newDir.exists()) {
+		if (!typeFolder.exists()) {
 		    System.out.println("Attempting to create " + type + ": "  + name + "...");
 
 		    try {
-		        newDir.mkdir();
+		        typeFolder.mkdir();
 		        if (type == "table") {
 		        	try {
-		        		newDir.createNewFile();
+		        		File tableSchemaFile = new File(typeFolder.getPath()+ "/" + name + ".schema");
+		        		tableSchemaFile.createNewFile();
+
+		        		File tableDataFile = new File(typeFolder.getPath() + "/" + name + ".data");
+		        		tableDataFile.createNewFile();
 		        	} catch (IOException io) {
 		        		//throw new IOException("Cannot create table!");
+		        		System.out.println("Failed to create table!");
 		        	}	
 		        }
 		    } catch (SecurityException se) {
@@ -95,6 +135,6 @@ public class FlavaSQLParsecutor {
 		    System.out.println("The " + type + " " + name + " already exists! Try using another name.");
 		}
 	}
-	/////////////
+	// END CREATE SECTION //
 
 }

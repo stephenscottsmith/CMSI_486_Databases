@@ -29,10 +29,8 @@ public class Flava {
 			try {
 			    String line = sc.nextLine().replaceAll("\n", "");
 
-			    // TODO 1: Tokenize arguments better 
+			    // Initial Parsing
 			    String [] commandTokens = line.split(" ");
-			    System.out.println(commandTokens.length);
-			    //printStringArray(commandTokens, "tokens");
 
 			    // process arguments
 			    if (commandTokens.length <= 2) {
@@ -41,25 +39,25 @@ public class Flava {
 				    } else if (commandTokens[0].equalsIgnoreCase("exit")) {
 			        	System.out.println("Exiting Flava");
 			        	System.exit(0);
-				    } else if (commandTokens[0].equalsIgnoreCase("list")) {
-				    	if (commandTokens[1].equalsIgnoreCase("databases") || commandTokens[1].equalsIgnoreCase("tables")) {
-				    		listItems(commandTokens[1]);
-				    	} else {
-				    		invalidCommand();
-				    	}
+				    } else if (commandTokens[0].equalsIgnoreCase("list") &&
+				    		  (commandTokens[1].equalsIgnoreCase("dbs") || 
+				    		   commandTokens[1].equalsIgnoreCase("tables")) ) {
+				    	listItems(commandTokens[1]);
 				    } else if (commandTokens[0].equalsIgnoreCase("use")) {
 				    	changeGlobalDatabase(commandTokens[1]);
 				    } else if (line.equalsIgnoreCase("which db")) {
 				    	whichDatabase();
-				    } 
+				    } else {
+				    	invalidCommand();
+				    }
 				} else {
-			        
+			        // Parse better
 			        commandTokens = tokenizeInput(line);
 			        System.out.println("Tokens to parse: " + commandTokens.length);
 			        FlavaSQLParsecutor.parseCommand(commandTokens);
 			    } 
 			} catch (Exception e) {
-				System.out.println("Unable to parse your command!");
+				invalidCommand();
 			}
 		}
 	}
@@ -99,7 +97,7 @@ public class Flava {
 			    whereArray = new String [] {"where", whereParameters};
 			}
 		}
-		
+
 		ArrayList<String> tokenList = new ArrayList<String>(Arrays.asList(tier1Commands.split(" ")));
 		tokenList.addAll(Arrays.asList(optionArray));
 		tokenList.addAll(Arrays.asList(whereArray));
@@ -188,7 +186,7 @@ public class Flava {
 
 	/** listItems can list the databases in Flava or the tables of a specified database */
 	public static void listItems (String type) {
-		if (type.equals("databases")) {
+		if (type.equals("dbs")) {
 			listDatabasesInEngine();
 		} else if (type.equals("tables")) {
 			listTablesOnDatabase();
@@ -197,6 +195,7 @@ public class Flava {
 
 	public static void changeGlobalDatabase (String newGlobalDatabase) {
 		newGlobalDatabase += ".fdb";
+		updateDatabaseArray();
 		if (Arrays.asList(databaseArray).contains(newGlobalDatabase)) {
 			currentGlobalDatabase = newGlobalDatabase;
 			whichDatabase();
@@ -207,6 +206,10 @@ public class Flava {
 
 	public static void whichDatabase () {
 		System.out.println("Using " + currentGlobalDatabase);
+	}
+
+	public static String getCurrentGlobalDatabase () {
+		return currentGlobalDatabase;
 	}
 }
 
