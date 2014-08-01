@@ -6,6 +6,8 @@
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.IOException;
 import java.io.FilenameFilter;
@@ -63,9 +65,13 @@ public class Flava {
 	}
 
 	public static void initiateStartup () {
-		if (!FlavaSQLParsecutor.directoryExists(databaseDirectoryString)) {
-			FlavaSQLParsecutor.createDatabaseItem(databaseDirectoryString, "folder", "data");
-			FlavaSQLParsecutor.createDatabaseItem("./data/test.fdb", "database", "test");
+		if (!Files.exists(Paths.get("./data/"))) {
+			try {
+				Files.createDirectory(Paths.get("./data/"));
+			} catch (IOException io) {
+
+			}
+			FlavaSQLParsecutor.createDatabaseItem(new String [] {"./data/test.fdb", "database", "test"});
 		}
 		updateDatabaseArray();
 	}
@@ -211,6 +217,22 @@ public class Flava {
 	public static String getCurrentGlobalDatabase () {
 		return currentGlobalDatabase;
 	}
+
+	public static String [] getDatabaseArray () {
+		return databaseArray;
+	}
+
+	public static void setDatabaseArray(String [] newDatabaseArray) {
+		databaseArray = newDatabaseArray;
+	}
+
+	// public static void removeDatabaseFromDatabaseArray (String databaseToRemove) {
+	// 	for (int i = 0; i < databaseArray.length; i++) {
+	// 		if (databaseArray[i].equals((databaseToRemove + ".fdb"))) {
+
+	// 		}
+	// 	}
+	// }
 }
 
 

@@ -5,6 +5,7 @@
 
 import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.List;
 import java.io.File;
 import java.io.IOException;
 import java.io.FilenameFilter;
@@ -46,13 +47,19 @@ public class FlavaSQLParsecutor {
 	}
 
 	public static void executeCommand (String [] commandTokens) {
-		String command = commandTokens[0].toLowerCase();
+		int tokenLength = commandTokens.length;
+		String command = commandTokens[0].toLowerCase(),
+			   objectType = commandTokens[determineObject(tokenLength, 1, 3)].toLowerCase(),
+			   objectParameter = commandTokens[determineObject(tokenLength, 2, 4)].toLowerCase();
 		switch (command) {
-			case "create" :
-				create(commandTokens);
+			case "create" :			
+				createDatabaseItem(objectType, objectParameter);
+				
+				
+				// update database array
 				break;
 			case "delete" :
-				//delete();
+				deleteDatabaseItem(objectType, objectParameter);
 				break;
 			case "select" :
 				System.out.println("selecting");
@@ -67,74 +74,84 @@ public class FlavaSQLParsecutor {
 		}
 	}
 
-	public static void create (String [] commandTokens) {
-		String objectType = commandTokens[1].toLowerCase(),
-			   objectParameter = commandTokens[2];
-		switch (objectType) {
-			case "database" :
-				createDatabase(objectParameter);
-				break;
-			case "table" :
-				createTable(Flava.getCurrentGlobalDatabase(), objectParameter);
-				break;
-			case "on" :
-				System.out.println("NEED TO IMPLEMENT!");
-				break;
-		}
-	}
+	// DELETE SECTION // 
+
+
+	// END DELETE SECTION //
 
 	public static Boolean isCommandTokenLengthValid (int length) {
 		return (length == 3 || length == 5 || length == 7);
 	}
 
-	////////////////
-	public static boolean directoryExists (String path) {
-		File directory = new File(path);
-		return directory.exists();
+	public static String pathConstructor (String objectType, String name) {
+		// TODO: REFACTOR THE STRING LITERALS!
+		String path = "./data/";
+		if (objectType.toLowerCase().equals("database")) {
+			path += name + ".fdb/";
+		} else if (objectType.toLowerCase().equals("table")) {
+			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/";
+		} else if (objectType.toLowerCase().equals("schema")) {
+			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".schema";
+		} else if (objectType.toLowerCase().equals("data")) {
+			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".data";
+		} else if (objectType.toLowerCase().equals("index")) {
+			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".index";
+		} 
+		return path;
 	}
 
+	public static int determineObject (int commandTokenLength, int option1, int option2) {
+		return (commandTokenLength == 3) ? option1 : option2;
+	}
 
 	// CREATE SECTION //
-	public static void createDatabase (String databaseName) {
-		createDatabaseItem(("./data/" + databaseName + ".fdb"), "database", databaseName);
-	}
+	public static void createDatabaseItem (String objectType, String objectParameter) {
+		String pathString = pathConstructor(objectType, objectParameter);
+		File objectFile = new File(pathString);
 
-	public static void createTable (String databaseName, String tableName) {
-		System.out.println(("./data/" + databaseName + ".fdb/" +  tableName + ".ftl"));
-		System.out.println(tableName);
-		createDatabaseItem(("./data/" + databaseName + "/" +  tableName + ".ftl"), "table", tableName);
-	}
+		if (!objectFile.exists()) {
+			try {
+				objectFile.mkdir();
 
-	public static void createDatabaseItem (String directoryPath, String type, String name) {
-		// Cite: http://stackoverflow.com/questions/3634853/how-to-create-a-directory-in-java
-		File typeFolder = new File(directoryPath);
+				if (objectType.equals("table")) {
+					File dataFile = new File(pathConstructor("data", objectParameter)),
+						 schemaFile = new File(pathConstructor("schema", objectParameter));
+					dataFile.createNewFile();
+					schemaFile.createNewFile();
+				}
+			} catch (IOException io) {
 
-		if (!typeFolder.exists()) {
-		    System.out.println("Attempting to create " + type + ": "  + name + "...");
-
-		    try {
-		        typeFolder.mkdir();
-		        if (type == "table") {
-		        	try {
-		        		File tableSchemaFile = new File(typeFolder.getPath()+ "/" + name + ".schema");
-		        		tableSchemaFile.createNewFile();
-
-		        		File tableDataFile = new File(typeFolder.getPath() + "/" + name + ".data");
-		        		tableDataFile.createNewFile();
-		        	} catch (IOException io) {
-		        		//throw new IOException("Cannot create table!");
-		        		System.out.println("Failed to create table!");
-		        	}	
-		        }
-		    } catch (SecurityException se) {
-		        throw new SecurityException("You may not have permissions to create a new " + type + "! Consult your IT.");
-		    }        
-    
-	       	System.out.println("The " + type + " " + name + " has been successfully created.");  
+			}
 		} else {
-		    System.out.println("The " + type + " " + name + " already exists! Try using another name.");
+			System.out.println("The " + objectType + " " + objectParameter + 
+				" already exists! Cannot create a duplicate " + objectType);
 		}
+				
 	}
 	// END CREATE SECTION //
+
+	public static void deleteDatabaseItem (String objectType, String objectParameter) {
+		String pathString = pathConstructor(objectType, objectParameter);
+		File file = new File(pathString);
+
+		if (file.exists()) {
+			try {
+				String [] filesInFile = file.list();
+
+				for (String fileString : filesInFile) {
+				    File currentFile = new File(file.getPath(), fileString);
+				    currentFile.delete();
+				}
+				file.delete();
+
+			} catch (SecurityException se) {
+				System.out.println("Cannot delete " + objectType + " " + objectParameter + "!");
+			}
+		} else {
+			System.out.println("The " + objectType + " " + objectParameter + 
+				" does not exist!");
+		}
+
+	}
 
 }
