@@ -101,8 +101,6 @@ public class Flava {
 			tokenArrayLength += 2;
 			String optionCommands = input.substring(lowerCaseInput.indexOf(option), 
 				   									lowerCaseInput.length());
-
-			
 			tokens.addAll(Arrays.asList(option, getParenthesisParameters(optionCommands)));
 
 			// Can probably just send the option commands since its a shorter string
@@ -204,7 +202,7 @@ public class Flava {
 				System.out.println(stringArray[i]);
 			}
 		} else {
-			System.out.println("There are currently 0 " + type + "s.");
+			System.out.println("There are currently 0 " + type + ".");
 		}
 	}
 

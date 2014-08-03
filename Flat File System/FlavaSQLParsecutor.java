@@ -117,7 +117,6 @@ public class FlavaSQLParsecutor {
 	
 
 	public String getFolderPath () {
-		System.out.println("HEREEE");
 		// TODO: REFACTOR THE STRING LITERALS!
 		String folderPath = "./data/";
 		if (objectType.equals("database")) {
@@ -158,14 +157,15 @@ public class FlavaSQLParsecutor {
 						 schemaFile = new File(getFilePath(".schema"));
 					dataFile.createNewFile();
 					schemaFile.createNewFile();
-				} else if (objectType.equals("index")) {
+				} else if (option.equals("index")) {
+					System.out.println("IDXD PATH : " + getFilePath(".idxd"));
 					File indexDataFile = new File(getFilePath(".idxd")),
 						 indexSchemaFile = new File(getFilePath(".idxs"));
 					indexDataFile.createNewFile();
 					indexSchemaFile.createNewFile();
 				}
 			} catch (IOException io) {
-
+				System.out.println("WHY HERE");
 			}
 		} else {
 			System.out.println("The " + this.objectType + " " + this.objectParameter + 
