@@ -52,18 +52,18 @@ public class Flava {
 				    } else if (line.equalsIgnoreCase("which db")) {
 				    	whichDatabase();
 				    } else {
-				    	invalidCommand();
+				    	invalidCommand("Flava " + 55);
 				    }
 				} else {
 			        // Parse better
 			        FlavaSQLParsecutor fp = new FlavaSQLParsecutor(tokenizeInput(line));
 			        if (fp.isCommandExecutable()) {
-			        	System.out.println("CONSTRUCTED");
+			        	System.out.println("Flava 61 : CREATED FP");
 			        	fp.execute();
 			        }
 			    } 
 			} catch (Exception e) {
-				invalidCommand();
+				invalidCommand("Flava " + 65);
 			}
 		}
 	}
@@ -88,94 +88,56 @@ public class Flava {
 	public static String [] tokenizeInput (String input) {
 		String lowerCaseInput = input.toLowerCase();
 		int tokenArrayLength = 3;
-		
-		Boolean containsOption = containsValidOption(input, validOptions);
+		Boolean containsOption = containsValidOption(lowerCaseInput, validOptions);
+		String optionCommands = "";
 		String option = determineValidOption(lowerCaseInput, validOptions);
-		ArrayDeque<String> tokens = new ArrayDeque<String>(
+		String extendedOptionCommands = "";
+		int extendedOptionIndex = 0;
+		ArrayList<String> tokens = new ArrayList<String>(
 			(containsOption) ? Arrays.asList(input.substring(0, input.indexOf(option)).split(" ")) :
 			Arrays.asList(input.split(" "))
 		);
 
 		if (containsOption) {
+			
+			// TODO: Remove
+			System.out.println("contains options");
 			// basic idea is to determine where the first option is and create 2 substrings
-			tokenArrayLength += 2;
-			String optionCommands = input.substring(lowerCaseInput.indexOf(option), 
+			optionCommands = input.substring(lowerCaseInput.indexOf(option), 
 				   									lowerCaseInput.length());
 			tokens.addAll(Arrays.asList(option, getParenthesisParameters(optionCommands)));
 
 			// Can probably just send the option commands since its a shorter string
 			if (containsValidOption(input, validExtendedOptions)) {
+				// TODO: Remove
+				System.out.println("contains extended options");
 				tokenArrayLength += 2;
 				String extendedOption = determineValidOption(lowerCaseInput, validExtendedOptions);
-				int extendedOptionIndex = optionCommands.indexOf(extendedOption);
-				String extendedOptionCommands = optionCommands.substring(extendedOptionIndex, optionCommands.length()); 
+				extendedOptionIndex = optionCommands.indexOf(extendedOption);
+				extendedOptionCommands = optionCommands.substring(extendedOptionIndex, optionCommands.length()); 
 				
-				// This fixes the option array in case the option == index 
-				if (option.equals("index")) {
-					tokens.removeLast();
-					tokens.removeLast();
-					tokens.addAll(Arrays.asList(optionCommands.substring(0, extendedOptionIndex).split(" ")));
-				}
 				tokens.addAll(Arrays.asList(extendedOption, getParenthesisParameters(extendedOptionCommands)));
 			}
 		}
+		// This fixes the option array in case the option == index 
+		if (option.equals("index")) {
+			extendedOptionIndex = (extendedOptionIndex == 0) ? optionCommands.length() : extendedOptionIndex;  
+			tokens.set((tokens.indexOf("index") + 1), 
+					   optionCommands.substring(0, extendedOptionIndex).split(" ")[1]);
+		}
 		System.out.println("STRING: " + tokens.toString());
-		//tokens.addAll(Arrays.asList());
-
-		
-			// System.out.println("objectParameters : " + objectParameters + "\n" +
-			// 				   "option : " + option + "\n" +
-			// 				   "optionCommands : " + optionCommands);
-		// Split objectParameters as usual
-
-		// System.out.println(lowerCaseInput + "\n" +
-		// 				   containsOption + " : " + option + "\n" +
-		// 				   containsExtendedOption + " : " + extendedOption);
-
-		// String lowerCaseInput = input.toLowerCase(),
-		// 	   tier1Commands = input;
-		// int tokenArrayLength = 3;
-		// Boolean containsOption = containsValidOption(input.toLowerCase()),
-		// 		containsWhere = false;
-		// String [] optionArray = new String[2]; 
-		// String [] extendedOptionsArray = new String[2];
-
-		// if (containsOption) {
-		// 	String option = determineValidOption(lowerCaseInput.toLowerCase()),
-		// 		   optionCommands = input.substring(lowerCaseInput.indexOf(option), lowerCaseInput.length()),
-		// 	       optionParameters = getParenthesisParameters(optionCommands),
-		// 	       lowerCaseOptions = optionCommands.toLowerCase();
-		// 	tier1Commands = input.substring(0, lowerCaseInput.indexOf(option));
-		// 	tokenArrayLength += 2;
-		// 	optionArray = new String [] {option, optionParameters};
-		// 	containsWhere = lowerCaseOptions.contains("where");
-
-		// 	if (containsWhere) {
-		// 		String whereCommands = optionCommands.substring(lowerCaseOptions.indexOf("where")),
-		// 		       whereParameters = getParenthesisParameters(whereCommands);
-		// 	    tokenArrayLength += 2;
-
-		// 	    extendedOptionsArray = new String [] {"where", whereParameters};
-		// 	}
+		// if (tokens.toString().contains("INVALID PARAMETERS") && 
+		// 	!lowerCaseInput.contains("delete")) {
+		// 	return new String [] {"BREAK COMMAND"};
 		// }
-
-		// ArrayList<String> tokenList = new ArrayList<String>(Arrays.asList(tier1Commands.split(" ")));
-		// tokenList.addAll(Arrays.asList(optionArray));
-		// tokenList.addAll(Arrays.asList(extendedOptionsArray));
-		// tokenList.removeAll(Collections.singleton(null));
-		// String [] commandTokens = tokenList.toArray(new String[tokenArrayLength]);
-		// printStringArray(commandTokens, "token");
-		// return commandTokens;
 		return tokens.toArray(new String[tokens.size()]);
 	}
 
 	public static String getParenthesisParameters (String command) {
-		try {
+		if (command.indexOf("(") > -1) {	
 			return command.substring(command.indexOf("("), command.indexOf(")") + 1);
-		} catch (Exception e) {
-			invalidCommand();
 		}
-		return "INVALID PARAMETERS";
+		return "INVALID";
 	}
 
 	public static String determineValidOption (String input, ArrayList<String> options) {
@@ -227,8 +189,8 @@ public class Flava {
 		System.out.print(">> ");
 	}
 
-	public static void invalidCommand () {
-		System.out.println("THE COMMAND YOU ENTERED CANNOT BE PARSED!");
+	public static void invalidCommand (String lineNumber) {
+		System.out.println(lineNumber + " : THE COMMAND YOU ENTERED CANNOT BE PARSED AND/OR EXECUTED!");
 	}
 
 

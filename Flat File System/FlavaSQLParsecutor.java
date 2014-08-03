@@ -24,10 +24,10 @@ public class FlavaSQLParsecutor {
 	private String command;
 	private String objectType;
 	private String objectParameter;
-	private String option;
-	private String optionParameter;
-	private String extendedOption;
-	private String extendedOptionParameter;
+	private String option = "";
+	private String optionParameter = "";
+	private String extendedOption = "";
+	private String extendedOptionParameter = "";
 
 	public FlavaSQLParsecutor (String [] commandTokens) {
 		try {
@@ -91,11 +91,10 @@ public class FlavaSQLParsecutor {
 		switch (command) {
 			case "create" :			
 				createDatabaseItem();	
-				System.out.println("POST");
 				// update database array
 				break;
 			case "delete" :
-				deleteDatabaseItem(objectType, objectParameter);
+				deleteDatabaseItem();
 				break;
 			case "select" :
 				System.out.println("selecting");
@@ -125,7 +124,7 @@ public class FlavaSQLParsecutor {
 			String currentGlobalDatabase = Flava.getCurrentGlobalDatabase(),
 				   tableExtension = ".ftl/";
 			folderPath += currentGlobalDatabase + objectParameter + tableExtension;
-			System.out.println("THIS: " + tokenLength + ", " + option);
+
 			if (tokenLength > 3 && this.option.equals("index")) {
 				System.out.println("THIS: " + tokenLength + ", " + option);
 				String indexExtension = ".idx/";
@@ -138,7 +137,7 @@ public class FlavaSQLParsecutor {
 
 	public String getFilePath (String fileType) {
 		String fileName = (tokenLength == 3) ? objectParameter : optionParameter;
-		System.out.println(getFolderPath() + fileName + fileType);
+		//System.out.println(getFolderPath() + fileName + fileType);
 		return getFolderPath() + fileName + fileType;
 	}
 
@@ -175,7 +174,7 @@ public class FlavaSQLParsecutor {
 	}
 	// END CREATE SECTION //
 
-	public void deleteDatabaseItem (String objectType, String objectParameter) {
+	public void deleteDatabaseItem () {
 		String pathString = getFolderPath();
 		File file = new File(pathString);
 
@@ -199,4 +198,9 @@ public class FlavaSQLParsecutor {
 
 	}
 
+	public String toString () {
+		return this.command + " " + this.objectType + " " + this.objectParameter + " " + 
+			   this.option + " " + this.optionParameter + " " + this.extendedOption + " " +
+			   this.extendedOptionParameter;
+	}
 }
