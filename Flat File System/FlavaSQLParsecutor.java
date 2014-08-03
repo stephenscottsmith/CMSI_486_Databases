@@ -11,51 +11,87 @@ import java.io.IOException;
 import java.io.FilenameFilter;
 
 public class FlavaSQLParsecutor {
-	static ArrayList <String> validCommands = new ArrayList<String>(Arrays.asList("create", "delete", "insert", "select", "update"));
-	static ArrayList <String> validObjects = new ArrayList<String>(Arrays.asList("database", "table", "on"));
-	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", "values", "schema"));
-	ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList(""));
-	
-	// What Happens:
-	// Tokenized string is sent to Parsecutor
-	// Parsecutor must then validate that the command is valid both syntatically
-	// and semantically
-	// Parsecutor then tries to execute the command
+	static ArrayList <String> validCommands = new ArrayList<String>(Arrays.asList("create", 
+		"delete", "insert", "select", "update"));
+	static ArrayList <String> validObjects = new ArrayList<String>(Arrays.asList("database", 
+		"table", "on"));
+	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", 
+		"values", "schema"));
+	ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList("where", "schema"));
 
-	public FlavaSQLParsecutor () {
+	private int tokenLength;
+	private String [] commandTokens;
+	private String command;
+	private String objectType;
+	private String objectParameter;
+	private String option;
+	private String optionParameter;
+	private String extendedOption;
+	private String extendedOptionParameter;
 
-	}
+	public FlavaSQLParsecutor (String [] commandTokens) {
+		try {
+			this.tokenLength = commandTokens.length;
+			if (isValidTokenLength(tokenLength) &&
+				objectTokensValid(Arrays.copyOfRange(commandTokens, 0, 2))) {
 
-	public static void parseCommand (String [] commandTokens) {
-		// TODO 1: Validate command more
-		try {	
-			if (isCommandTokenLengthValid(commandTokens.length) &&
-				validCommands.contains(commandTokens[0]) &&
-				validObjects.contains(commandTokens[1])) {
-				System.out.println("VALID COMMAND! YAY!");
-				
-				executeCommand(commandTokens);
-			} else {
-				System.out.println("FUCK");
+				// Set command and object tokens
+				this.command = commandTokens[0].toLowerCase();
+				this.objectType = commandTokens[1].toLowerCase();
+				this.objectParameter = commandTokens[2];
+
+				if (tokenLength > 3 && optionTokensValid(Arrays.copyOfRange(commandTokens, 3, 5))) {
+
+					// Set optional tokens
+					this.option = commandTokens[3].toLowerCase();
+					this.optionParameter = commandTokens[4];
+
+					if (tokenLength > 5 && extendedTokensValid(Arrays.copyOfRange(commandTokens, 5, tokenLength))) {
+
+						// Set extended option tokens
+						this.extendedOption = commandTokens[5].toLowerCase();
+						this.extendedOptionParameter = commandTokens[6];
+
+					}
+				}
 			}
+			System.out.println(this.command + " " + this.objectType + " " + this.objectParameter + " " + this.option + " " + this.optionParameter + " " + this.extendedOption + " " + this.extendedOptionParameter);
 		} catch (Exception e) {
-			System.out.println("INVALID COMMAND ENTERED. TRY AGAIN.");
+			System.out.println("CANNOT PARSE YOUR COMMAND! IT CONTAINS INVALID SYNTAX TOKENS!");
 		}
-		// for (String s : commandTokens) {
-		// 	System.out.println(s);
-		// }
 	}
 
-	public static void executeCommand (String [] commandTokens) {
-		int tokenLength = commandTokens.length;
-		String command = commandTokens[0].toLowerCase(),
-			   objectType = commandTokens[determineObject(tokenLength, 1, 3)].toLowerCase(),
-			   objectParameter = commandTokens[determineObject(tokenLength, 2, 4)].toLowerCase();
+	/** Constructor Validation **/
+	public static Boolean isValidTokenLength (int length) {
+		return (length == 3 || length == 5 || length == 7);
+	}
+
+	public static Boolean objectTokensValid (String [] objectTokens) {
+		return ((validCommands.contains(objectTokens[0])) &&
+				(validObjects.contains(objectTokens[1])));
+	}
+
+	public static Boolean optionTokensValid (String [] optionTokens) {
+		// Need to validate structure of parameters
+		return (validOptions.contains(optionTokens[0]));
+	}
+
+	public static Boolean extendedTokensValid (String [] extendedTokens) {
+		// Need to validate structure of parameters
+		return (extendedTokens[0].contains(extendedTokens[0]));
+	}
+	/** END Constructor Validation **/
+
+	// Does the command, now that it contains correct tokens, make sense? i.e. Can you "insert on tableName"
+	public Boolean isCommandExecutable () {
+		return true;
+	}
+
+	public void execute () {
 		switch (command) {
 			case "create" :			
-				createDatabaseItem(objectType, objectParameter);
-				
-				
+				createDatabaseItem();	
+				System.out.println("POST");
 				// update database array
 				break;
 			case "delete" :
@@ -70,7 +106,6 @@ public class FlavaSQLParsecutor {
 			case "update" :
 				System.out.println("updating");
 				break;
-
 		}
 	}
 
@@ -79,59 +114,69 @@ public class FlavaSQLParsecutor {
 
 	// END DELETE SECTION //
 
-	public static Boolean isCommandTokenLengthValid (int length) {
-		return (length == 3 || length == 5 || length == 7);
-	}
+	
 
-	public static String pathConstructor (String objectType, String name) {
+	public String getFolderPath () {
+		System.out.println("HEREEE");
 		// TODO: REFACTOR THE STRING LITERALS!
-		String path = "./data/";
-		if (objectType.toLowerCase().equals("database")) {
-			path += name + ".fdb/";
-		} else if (objectType.toLowerCase().equals("table")) {
-			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/";
-		} else if (objectType.toLowerCase().equals("schema")) {
-			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".schema";
-		} else if (objectType.toLowerCase().equals("data")) {
-			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".data";
-		} else if (objectType.toLowerCase().equals("index")) {
-			path += Flava.getCurrentGlobalDatabase() + "/" + name + ".ftl/" + name + ".index";
+		String folderPath = "./data/";
+		if (objectType.equals("database")) {
+			folderPath += objectParameter + ".fdb/";
+		} else {
+			String currentGlobalDatabase = Flava.getCurrentGlobalDatabase(),
+				   tableExtension = ".ftl/";
+			folderPath += currentGlobalDatabase + objectParameter + tableExtension;
+			System.out.println("THIS: " + tokenLength + ", " + option);
+			if (tokenLength > 3 && this.option.equals("index")) {
+				System.out.println("THIS: " + tokenLength + ", " + option);
+				String indexExtension = ".idx/";
+				folderPath += this.optionParameter + indexExtension;
+			}
 		} 
-		return path;
+		System.out.println("Folder path: " + folderPath);
+		return folderPath;
 	}
 
-	public static int determineObject (int commandTokenLength, int option1, int option2) {
-		return (commandTokenLength == 3) ? option1 : option2;
+	public String getFilePath (String fileType) {
+		String fileName = (tokenLength == 3) ? objectParameter : optionParameter;
+		System.out.println(getFolderPath() + fileName + fileType);
+		return getFolderPath() + fileName + fileType;
 	}
 
 	// CREATE SECTION //
-	public static void createDatabaseItem (String objectType, String objectParameter) {
-		String pathString = pathConstructor(objectType, objectParameter);
+	public void createDatabaseItem () {
+		String pathString = getFolderPath();
 		File objectFile = new File(pathString);
 
 		if (!objectFile.exists()) {
 			try {
 				objectFile.mkdir();
-
-				if (objectType.equals("table")) {
-					File dataFile = new File(pathConstructor("data", objectParameter)),
-						 schemaFile = new File(pathConstructor("schema", objectParameter));
+				if (this.objectType.equals("database")) {
+					Flava.updateDatabaseList();
+				} else if (this.objectType.equals("table")) {
+					File dataFile = new File(getFilePath(".data")),
+						 schemaFile = new File(getFilePath(".schema"));
 					dataFile.createNewFile();
 					schemaFile.createNewFile();
+				} else if (objectType.equals("index")) {
+					File indexDataFile = new File(getFilePath(".idxd")),
+						 indexSchemaFile = new File(getFilePath(".idxs"));
+					indexDataFile.createNewFile();
+					indexSchemaFile.createNewFile();
 				}
 			} catch (IOException io) {
 
 			}
 		} else {
-			System.out.println("The " + objectType + " " + objectParameter + 
-				" already exists! Cannot create a duplicate " + objectType);
+			System.out.println("The " + this.objectType + " " + this.objectParameter + 
+				" already exists! Cannot create a duplicate " + this.objectType);
 		}
 				
 	}
 	// END CREATE SECTION //
 
-	public static void deleteDatabaseItem (String objectType, String objectParameter) {
-		String pathString = pathConstructor(objectType, objectParameter);
+	public void deleteDatabaseItem (String objectType, String objectParameter) {
+		String pathString = getFolderPath();
 		File file = new File(pathString);
 
 		if (file.exists()) {
@@ -145,10 +190,10 @@ public class FlavaSQLParsecutor {
 				file.delete();
 
 			} catch (SecurityException se) {
-				System.out.println("Cannot delete " + objectType + " " + objectParameter + "!");
+				System.out.println("Cannot delete " + this.objectType + " " + this.objectParameter + "!");
 			}
 		} else {
-			System.out.println("The " + objectType + " " + objectParameter + 
+			System.out.println("The " + this.objectType + " " + this.objectParameter + 
 				" does not exist!");
 		}
 

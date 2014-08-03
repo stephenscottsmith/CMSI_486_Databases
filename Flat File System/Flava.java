@@ -12,14 +12,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.FilenameFilter;
 import java.util.Collections;
+import java.util.ArrayDeque;
 
 public class Flava {
 	private static String databaseDirectoryString = "./data/";
 	private static String databaseDirectory;
-	private static String currentGlobalDatabase = "test.fdb";
-	private static String [] databaseArray;
+	private static String currentGlobalDatabase = "test.fdb/";
+	private static ArrayList<String> databaseList;
 	// TODO: This is redundant b/c it's also in Parsecutor
-	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", "values", "schema"));
+	static ArrayList<String> validOptions = new ArrayList<String>(Arrays.asList("index", "values", "schema"));
+	static ArrayList<String> validExtendedOptions = new ArrayList<String>(Arrays.asList("where","schema"));
 
 	public static void main(String[] args) {
 		initiateStartup();
@@ -44,7 +46,7 @@ public class Flava {
 				    } else if (commandTokens[0].equalsIgnoreCase("list") &&
 				    		  (commandTokens[1].equalsIgnoreCase("dbs") || 
 				    		   commandTokens[1].equalsIgnoreCase("tables")) ) {
-				    	listItems(commandTokens[1]);
+				    	listItems(commandTokens[1], true);
 				    } else if (commandTokens[0].equalsIgnoreCase("use")) {
 				    	changeGlobalDatabase(commandTokens[1]);
 				    } else if (line.equalsIgnoreCase("which db")) {
@@ -54,9 +56,11 @@ public class Flava {
 				    }
 				} else {
 			        // Parse better
-			        commandTokens = tokenizeInput(line);
-			        System.out.println("Tokens to parse: " + commandTokens.length);
-			        FlavaSQLParsecutor.parseCommand(commandTokens);
+			        FlavaSQLParsecutor fp = new FlavaSQLParsecutor(tokenizeInput(line));
+			        if (fp.isCommandExecutable()) {
+			        	System.out.println("CONSTRUCTED");
+			        	fp.execute();
+			        }
 			    } 
 			} catch (Exception e) {
 				invalidCommand();
@@ -65,52 +69,106 @@ public class Flava {
 	}
 
 	public static void initiateStartup () {
-		if (!Files.exists(Paths.get("./data/"))) {
+		File dataFile = new File("./data/");
+		if (!dataFile.exists()) {
 			try {
-				Files.createDirectory(Paths.get("./data/"));
-			} catch (IOException io) {
+				System.out.println("Attempting to initialize Flava data directory...");
+				dataFile.mkdir();
+			} catch (SecurityException io) {
 
 			}
-			FlavaSQLParsecutor.createDatabaseItem(new String [] {"./data/test.fdb", "database", "test"});
+			System.out.println("Flava data directory has been successfully created!\nAttempting to create test database...");
+			FlavaSQLParsecutor fp = new FlavaSQLParsecutor(new String [] {"create", "database", "test"});
+			fp.execute();
+			System.out.println("The test database has been successfully created!");
 		}
-		updateDatabaseArray();
+		updateDatabaseList();
 	}
 
 	public static String [] tokenizeInput (String input) {
-		String lowerCaseInput = input.toLowerCase(),
-			   tier1Commands = input;
+		String lowerCaseInput = input.toLowerCase();
 		int tokenArrayLength = 3;
-		Boolean containsOption = containsValidOption(input.toLowerCase()),
-				containsWhere = false;
-		String [] optionArray = new String[2]; 
-		String [] whereArray = new String[2];
+		
+		Boolean containsOption = containsValidOption(input, validOptions);
+		String option = determineValidOption(lowerCaseInput, validOptions);
+		ArrayDeque<String> tokens = new ArrayDeque<String>(
+			(containsOption) ? Arrays.asList(input.substring(0, input.indexOf(option)).split(" ")) :
+			Arrays.asList(input.split(" "))
+		);
 
 		if (containsOption) {
-			String option = determineValidOption(lowerCaseInput.toLowerCase()),
-				   optionCommands = input.substring(lowerCaseInput.indexOf(option), lowerCaseInput.length()),
-			       optionParameters = getParenthesisParameters(optionCommands),
-			       lowerCaseOptions = optionCommands.toLowerCase();
-			tier1Commands = input.substring(0, lowerCaseInput.indexOf(option));
+			// basic idea is to determine where the first option is and create 2 substrings
 			tokenArrayLength += 2;
-			optionArray = new String [] {option, optionParameters};
-			containsWhere = lowerCaseOptions.contains("where");
+			String optionCommands = input.substring(lowerCaseInput.indexOf(option), 
+				   									lowerCaseInput.length());
 
-			if (containsWhere) {
-				String whereCommands = optionCommands.substring(lowerCaseOptions.indexOf("where")),
-				       whereParameters = getParenthesisParameters(whereCommands);
-			    tokenArrayLength += 2;
+			
+			tokens.addAll(Arrays.asList(option, getParenthesisParameters(optionCommands)));
 
-			    whereArray = new String [] {"where", whereParameters};
+			// Can probably just send the option commands since its a shorter string
+			if (containsValidOption(input, validExtendedOptions)) {
+				tokenArrayLength += 2;
+				String extendedOption = determineValidOption(lowerCaseInput, validExtendedOptions);
+				int extendedOptionIndex = optionCommands.indexOf(extendedOption);
+				String extendedOptionCommands = optionCommands.substring(extendedOptionIndex, optionCommands.length()); 
+				
+				// This fixes the option array in case the option == index 
+				if (option.equals("index")) {
+					tokens.removeLast();
+					tokens.removeLast();
+					tokens.addAll(Arrays.asList(optionCommands.substring(0, extendedOptionIndex).split(" ")));
+				}
+				tokens.addAll(Arrays.asList(extendedOption, getParenthesisParameters(extendedOptionCommands)));
 			}
 		}
+		System.out.println("STRING: " + tokens.toString());
+		//tokens.addAll(Arrays.asList());
 
-		ArrayList<String> tokenList = new ArrayList<String>(Arrays.asList(tier1Commands.split(" ")));
-		tokenList.addAll(Arrays.asList(optionArray));
-		tokenList.addAll(Arrays.asList(whereArray));
-		tokenList.removeAll(Collections.singleton(null));
-		String [] commandTokens = tokenList.toArray(new String[tokenArrayLength]);
 		
-		return commandTokens;
+			// System.out.println("objectParameters : " + objectParameters + "\n" +
+			// 				   "option : " + option + "\n" +
+			// 				   "optionCommands : " + optionCommands);
+		// Split objectParameters as usual
+
+		// System.out.println(lowerCaseInput + "\n" +
+		// 				   containsOption + " : " + option + "\n" +
+		// 				   containsExtendedOption + " : " + extendedOption);
+
+		// String lowerCaseInput = input.toLowerCase(),
+		// 	   tier1Commands = input;
+		// int tokenArrayLength = 3;
+		// Boolean containsOption = containsValidOption(input.toLowerCase()),
+		// 		containsWhere = false;
+		// String [] optionArray = new String[2]; 
+		// String [] extendedOptionsArray = new String[2];
+
+		// if (containsOption) {
+		// 	String option = determineValidOption(lowerCaseInput.toLowerCase()),
+		// 		   optionCommands = input.substring(lowerCaseInput.indexOf(option), lowerCaseInput.length()),
+		// 	       optionParameters = getParenthesisParameters(optionCommands),
+		// 	       lowerCaseOptions = optionCommands.toLowerCase();
+		// 	tier1Commands = input.substring(0, lowerCaseInput.indexOf(option));
+		// 	tokenArrayLength += 2;
+		// 	optionArray = new String [] {option, optionParameters};
+		// 	containsWhere = lowerCaseOptions.contains("where");
+
+		// 	if (containsWhere) {
+		// 		String whereCommands = optionCommands.substring(lowerCaseOptions.indexOf("where")),
+		// 		       whereParameters = getParenthesisParameters(whereCommands);
+		// 	    tokenArrayLength += 2;
+
+		// 	    extendedOptionsArray = new String [] {"where", whereParameters};
+		// 	}
+		// }
+
+		// ArrayList<String> tokenList = new ArrayList<String>(Arrays.asList(tier1Commands.split(" ")));
+		// tokenList.addAll(Arrays.asList(optionArray));
+		// tokenList.addAll(Arrays.asList(extendedOptionsArray));
+		// tokenList.removeAll(Collections.singleton(null));
+		// String [] commandTokens = tokenList.toArray(new String[tokenArrayLength]);
+		// printStringArray(commandTokens, "token");
+		// return commandTokens;
+		return tokens.toArray(new String[tokens.size()]);
 	}
 
 	public static String getParenthesisParameters (String command) {
@@ -122,8 +180,8 @@ public class Flava {
 		return "INVALID PARAMETERS";
 	}
 
-	public static String determineValidOption (String input) {
-		for (String option : validOptions) {
+	public static String determineValidOption (String input, ArrayList<String> options) {
+		for (String option : options) {
 			if (input.contains(option)) {
 				return option;
 			}	
@@ -131,8 +189,8 @@ public class Flava {
 		return "NO OPTION";
 	}
 
-	public static Boolean containsValidOption (String input) {
-		for (String option : validOptions) {
+	public static Boolean containsValidOption (String input, ArrayList<String> options) {
+		for (String option : options) {
 			if (input.contains(option)) {
 				return true;
 			}	
@@ -150,19 +208,7 @@ public class Flava {
 		}
 	}
 
-	public static void listDatabasesInEngine () {
-		updateDatabaseArray();
-		printStringArray(databaseArray, "database");
-	}
-
-	public static void updateDatabaseArray () {
-		databaseArray = getFilesInPath(("./data/"), ".fdb");
-	}
-
-	public static void listTablesOnDatabase () {
-		String [] tableArray = getFilesInPath(("./data/" + currentGlobalDatabase), ".ftl");
-		printStringArray(tableArray, "table");
-	}
+	
 
 	static class FilterAwareFilenameFilter implements FilenameFilter {
 		private final String filter;
@@ -177,10 +223,7 @@ public class Flava {
 	    }
 	}	
 
-	public static String [] getFilesInPath (String filePath, String filter) {
-		File directory = new File(filePath);
-		return directory.list(new FilterAwareFilenameFilter(filter));
-	}
+	
 
 	public static void prompt () {
 		System.out.print(">> ");
@@ -190,23 +233,35 @@ public class Flava {
 		System.out.println("THE COMMAND YOU ENTERED CANNOT BE PARSED!");
 	}
 
+
+
 	/** listItems can list the databases in Flava or the tables of a specified database */
-	public static void listItems (String type) {
-		if (type.equals("dbs")) {
-			listDatabasesInEngine();
-		} else if (type.equals("tables")) {
-			listTablesOnDatabase();
+	public static ArrayList<String> listItems (String type, Boolean print) {
+		String path = "./data/" + (type.equals("dbs") ? "" : currentGlobalDatabase),
+			   filter = (type.equals("dbs") ? ".fdb" : ".ftl");
+		File directory = new File(path);
+		String [] itemsArray = directory.list(new FilterAwareFilenameFilter(filter));
+		if (print) {
+			printStringArray(itemsArray, type);
+		}
+		return new ArrayList<String>(Arrays.asList(itemsArray));
+	}
+
+	public static void updateDatabaseList () {
+		databaseList = listItems("dbs", false);
+		for (String s : databaseList) {
+			System.out.println(s);
 		}
 	}
 
 	public static void changeGlobalDatabase (String newGlobalDatabase) {
 		newGlobalDatabase += ".fdb";
-		updateDatabaseArray();
-		if (Arrays.asList(databaseArray).contains(newGlobalDatabase)) {
+		if (databaseList.contains(newGlobalDatabase)) {
 			currentGlobalDatabase = newGlobalDatabase;
 			whichDatabase();
 		} else {
-			System.out.println("The database " + newGlobalDatabase + " does not exist in the system!");
+			System.out.println("The database " + newGlobalDatabase + 
+				" does not exist in the system!");
 		}
 	}
 
@@ -215,24 +270,9 @@ public class Flava {
 	}
 
 	public static String getCurrentGlobalDatabase () {
-		return currentGlobalDatabase;
+		return currentGlobalDatabase + "/";
 	}
 
-	public static String [] getDatabaseArray () {
-		return databaseArray;
-	}
-
-	public static void setDatabaseArray(String [] newDatabaseArray) {
-		databaseArray = newDatabaseArray;
-	}
-
-	// public static void removeDatabaseFromDatabaseArray (String databaseToRemove) {
-	// 	for (int i = 0; i < databaseArray.length; i++) {
-	// 		if (databaseArray[i].equals((databaseToRemove + ".fdb"))) {
-
-	// 		}
-	// 	}
-	// }
 }
 
 
