@@ -73,9 +73,11 @@ What do schema look like?
 Schema (columnName datatype, columnName datatype)
 
 Supported schema data types:
-integer, double, string, char
-
-What does the data look like when stored (Relational Document Store)?
+"long" 		// try to parse as long, if it works move on
+"double" 	// try to parse as double, it it works move on
+"char" 		// this is just a string w/ a length of 1
+"boolean"	// this is just true or false
+"string"	// this is just text so we test last
 
 
 

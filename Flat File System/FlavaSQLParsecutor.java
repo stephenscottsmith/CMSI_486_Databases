@@ -217,7 +217,7 @@ public class FlavaSQLParsecutor {
 		try {
 		    System.out.println("FILE PATH : " + getFilePath(fileType));
 		    out = new PrintWriter(new BufferedWriter(new FileWriter(getFilePath(fileType), true)));
-		    out.println(text);
+		    out.println(text.substring(1, (text.length() - 1)));
 		}catch (IOException e) {
 		    System.err.println("PS 220 : Could not append text to file for some reason");
 		}finally{
@@ -228,7 +228,9 @@ public class FlavaSQLParsecutor {
 	}
 
 	public Boolean areValuesProperlyFormatted () {
-		
+		// first check for proper number of fields trying to be entered
+		// will probably have to split into array
+		//placeSchemaIn
 		return true;
 	}
 
