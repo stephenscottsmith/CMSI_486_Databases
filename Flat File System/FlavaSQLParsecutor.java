@@ -9,6 +9,9 @@ import java.util.List;
 import java.io.File;
 import java.io.IOException;
 import java.io.FilenameFilter;
+import java.io.PrintWriter;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 public class FlavaSQLParsecutor {
 	static ArrayList <String> validCommands = new ArrayList<String>(Arrays.asList("create", 
@@ -17,7 +20,8 @@ public class FlavaSQLParsecutor {
 		"table", "on"));
 	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", 
 		"values", "schema"));
-	ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList("where", "schema"));
+	static ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList("where", "schema"));
+	static ArrayList <String> validDatabaseTypes = new ArrayList<String>(Arrays.asList("long", "double", "char", "string", "boolean"));
 
 	private int tokenLength;
 	private String [] commandTokens;
@@ -40,22 +44,20 @@ public class FlavaSQLParsecutor {
 				this.objectType = commandTokens[1].toLowerCase();
 				this.objectParameter = commandTokens[2];
 
-				if (tokenLength > 3 && optionTokensValid(Arrays.copyOfRange(commandTokens, 3, 5))) {
-
+				if (tokenLength > 3 && 
+					optionTokensValid(Arrays.copyOfRange(commandTokens, 3, 5))) {
 					// Set optional tokens
 					this.option = commandTokens[3].toLowerCase();
 					this.optionParameter = commandTokens[4];
 
-					if (tokenLength > 5 && extendedTokensValid(Arrays.copyOfRange(commandTokens, 5, tokenLength))) {
-
+					if (tokenLength > 5 && 
+						extendedTokensValid(Arrays.copyOfRange(commandTokens, 5, tokenLength))) {
 						// Set extended option tokens
 						this.extendedOption = commandTokens[5].toLowerCase();
 						this.extendedOptionParameter = commandTokens[6];
-
 					}
 				}
 			}
-			System.out.println(this.command + " " + this.objectType + " " + this.objectParameter + " " + this.option + " " + this.optionParameter + " " + this.extendedOption + " " + this.extendedOptionParameter);
 		} catch (Exception e) {
 			System.out.println("CANNOT PARSE YOUR COMMAND! IT CONTAINS INVALID SYNTAX TOKENS!");
 		}
@@ -101,19 +103,13 @@ public class FlavaSQLParsecutor {
 				break;
 			case "insert" :
 				System.out.println("inserting");
+				insert();
 				break;
 			case "update" :
 				System.out.println("updating");
 				break;
 		}
 	}
-
-	// DELETE SECTION // 
-
-
-	// END DELETE SECTION //
-
-	
 
 	public String getFolderPath () {
 		// TODO: REFACTOR THE STRING LITERALS!
@@ -131,17 +127,18 @@ public class FlavaSQLParsecutor {
 				folderPath += this.optionParameter + indexExtension;
 			}
 		} 
+		// TODO: Remove
 		System.out.println("Folder path: " + folderPath);
 		return folderPath;
 	}
 
 	public String getFilePath (String fileType) {
-		String fileName = (tokenLength == 3) ? objectParameter : optionParameter;
-		//System.out.println(getFolderPath() + fileName + fileType);
+		String fileName = (option.equals("index")) ? optionParameter : objectParameter;
+		// TODO: Remove
+		// System.out.println("RETURNING : " + getFolderPath() + fileName + fileType);
 		return getFolderPath() + fileName + fileType;
 	}
 
-	// CREATE SECTION //
 	public void createDatabaseItem () {
 		String pathString = getFolderPath();
 		File objectFile = new File(pathString);
@@ -156,27 +153,31 @@ public class FlavaSQLParsecutor {
 						 schemaFile = new File(getFilePath(".schema"));
 					dataFile.createNewFile();
 					schemaFile.createNewFile();
+					appendTextToFile(this.optionParameter, ".schema");
+					// Insert the schema after it's been validated
 				} else if (option.equals("index")) {
-					System.out.println("IDXD PATH : " + getFilePath(".idxd"));
 					File indexDataFile = new File(getFilePath(".idxd")),
 						 indexSchemaFile = new File(getFilePath(".idxs"));
 					indexDataFile.createNewFile();
+
 					indexSchemaFile.createNewFile();
+					// Insert the schema after it's been validated
+					appendTextToFile(this.extendedOptionParameter, ".idxs");
+
 				}
 			} catch (IOException io) {
 				System.out.println("WHY HERE");
 			}
 		} else {
-			System.out.println("The " + this.objectType + " " + this.objectParameter + 
-				" already exists! Cannot create a duplicate " + this.objectType);
+			System.out.println("The " + (this.tokenLength > 3 ? this.option : this.objectType) + " " + 
+							  (this.tokenLength > 3 ? this.optionParameter : this.objectParameter) + 
+							  " already exists! Cannot create a duplicate " + this.objectType);
 		}
 				
 	}
-	// END CREATE SECTION //
 
 	public void deleteDatabaseItem () {
-		String pathString = getFolderPath();
-		File file = new File(pathString);
+		File file = new File(getFolderPath());
 
 		if (file.exists()) {
 			try {
@@ -189,13 +190,46 @@ public class FlavaSQLParsecutor {
 				file.delete();
 
 			} catch (SecurityException se) {
-				System.out.println("Cannot delete " + this.objectType + " " + this.objectParameter + "!");
+				System.out.println("Cannot delete " + this.objectType + " " + 
+								   this.objectParameter + "! You may not have " +
+								   "permission to delete this item!");
 			}
 		} else {
 			System.out.println("The " + this.objectType + " " + this.objectParameter + 
 				" does not exist!");
 		}
+	}
 
+	public void insert () {
+		// Is object == on && does the tableName exist && is the option values &&
+		// are the parameters properly formatted for the table it is being inserted
+		// onto (i.e. check against schema)
+		File table = new File(getFolderPath());
+		if (this.objectType.equals("on") && table.exists() 
+			&& this.option.equals("values") && areValuesProperlyFormatted()) {
+			System.out.println("WILL INSERT");
+			appendTextToFile(this.optionParameter, ".data");
+		}
+	}
+
+	public void appendTextToFile (String text, String fileType) {
+		PrintWriter out = null;
+		try {
+		    System.out.println("FILE PATH : " + getFilePath(fileType));
+		    out = new PrintWriter(new BufferedWriter(new FileWriter(getFilePath(fileType), true)));
+		    out.println(text);
+		}catch (IOException e) {
+		    System.err.println("PS 220 : Could not append text to file for some reason");
+		}finally{
+		    if(out != null){
+		        out.close();
+		    }
+		} 
+	}
+
+	public Boolean areValuesProperlyFormatted () {
+		
+		return true;
 	}
 
 	public String toString () {

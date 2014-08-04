@@ -32,6 +32,8 @@ List of Commands:
 
 What do commands look like?
 Command + Object (Database, Table, Index) + Name Identifier 
++ option + optionParameter
++ extendedOption + extendedOptionParmeter
 
 !!! WHEN USING "ON" IT IS IMPLIED THAT YOU ARE ALWAYS REFERRING TO A TABLE !!!
 
@@ -71,10 +73,10 @@ What do schema look like?
 Schema (columnName datatype, columnName datatype)
 
 Supported schema data types:
-
+integer, double, string, char
 
 What does the data look like when stored (Relational Document Store)?
-{column_1:string, column_2:long, column_3:double, column_4:char}
+
 
 
 

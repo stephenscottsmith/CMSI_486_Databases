@@ -99,9 +99,6 @@ public class Flava {
 		);
 
 		if (containsOption) {
-			
-			// TODO: Remove
-			System.out.println("contains options");
 			// basic idea is to determine where the first option is and create 2 substrings
 			optionCommands = input.substring(lowerCaseInput.indexOf(option), 
 				   									lowerCaseInput.length());
@@ -109,16 +106,14 @@ public class Flava {
 
 			// Can probably just send the option commands since its a shorter string
 			if (containsValidOption(input, validExtendedOptions)) {
-				// TODO: Remove
-				System.out.println("contains extended options");
 				tokenArrayLength += 2;
 				String extendedOption = determineValidOption(lowerCaseInput, validExtendedOptions);
 				extendedOptionIndex = optionCommands.indexOf(extendedOption);
 				extendedOptionCommands = optionCommands.substring(extendedOptionIndex, optionCommands.length()); 
-				
 				tokens.addAll(Arrays.asList(extendedOption, getParenthesisParameters(extendedOptionCommands)));
 			}
 		}
+
 		// This fixes the option array in case the option == index 
 		if (option.equals("index")) {
 			extendedOptionIndex = (extendedOptionIndex == 0) ? optionCommands.length() : extendedOptionIndex;  
@@ -126,10 +121,7 @@ public class Flava {
 					   optionCommands.substring(0, extendedOptionIndex).split(" ")[1]);
 		}
 		System.out.println("STRING: " + tokens.toString());
-		// if (tokens.toString().contains("INVALID PARAMETERS") && 
-		// 	!lowerCaseInput.contains("delete")) {
-		// 	return new String [] {"BREAK COMMAND"};
-		// }
+
 		return tokens.toArray(new String[tokens.size()]);
 	}
 
