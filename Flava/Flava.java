@@ -14,6 +14,9 @@ import java.io.FilenameFilter;
 import java.util.Collections;
 import java.util.ArrayDeque;
 
+/**
+ * This is Flava!
+ */
 public class Flava {
 	private static String databaseDirectoryString = "./data/";
 	private static String databaseDirectory;
@@ -68,6 +71,7 @@ public class Flava {
 		}
 	}
 
+	/** This initiates startup. */
 	public static void initiateStartup () {
 		File dataFile = new File("./data/");
 		if (!dataFile.exists()) {
@@ -105,7 +109,8 @@ public class Flava {
 			tokens.addAll(Arrays.asList(option, getParenthesisParameters(optionCommands)));
 
 			// Can probably just send the option commands since its a shorter string
-			if (containsValidOption(input, validExtendedOptions)) {
+			if (containsValidOption(input, validExtendedOptions) && !option.equals("schema")) {
+				System.out.println("CONTAINS EXTENDED)");
 				tokenArrayLength += 2;
 				String extendedOption = determineValidOption(lowerCaseInput, validExtendedOptions);
 				extendedOptionIndex = optionCommands.indexOf(extendedOption);
