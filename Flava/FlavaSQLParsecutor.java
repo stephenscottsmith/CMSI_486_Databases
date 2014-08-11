@@ -221,7 +221,7 @@ public class FlavaSQLParsecutor {
 		}catch (IOException e) {
 		    System.err.println("PS 220 : Could not append text to file for some reason");
 		}finally{
-		    if(out != null){
+		    if (out != null){
 		        out.close();
 		    }
 		} 
@@ -229,6 +229,11 @@ public class FlavaSQLParsecutor {
 
 	public Boolean areValuesProperlyFormatted () {
 		// first check for proper number of fields trying to be entered
+		String [] values = this.optionParameter.substring(1, optionParameter.length() - 1).split(",");
+		for (String s : values) {
+			System.out.println(s.trim().length() + " : " + s.trim());
+		}
+		// Flava.printStringArray(values, "values");
 		// will probably have to split into array
 		//placeSchemaIn
 		return true;
