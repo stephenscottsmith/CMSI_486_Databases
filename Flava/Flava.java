@@ -87,6 +87,21 @@ public class Flava {
 			System.out.println("The test database has been successfully created!");
 		}
 		updateDatabaseList();
+
+		// String [] createTableCommand = new String [] {"create", "table", "lmu", "schema", 
+		// 											  "(firstName string, lastName string, age long, isStudent boolean)"};
+		// FlavaSQLParsecutor fp = new FlavaSQLParsecutor(createTableCommand);
+		// fp.execute();
+
+		// String [] insertCommand = new String [] {"create", "table", "lmu", "schema", 
+		// 									     "(firstName string, lastName string, age long, isStudent boolean)"};
+		// // Now add a shit ton of records
+		// for (int i = 0; i < 1000000; i++) {
+		// 	insertCommand = new String [] {"insert", "on", "lmu", "values", 
+		// 								   "(Steve, Smith, " + i + ", true)"};
+		// 	fp = new FlavaSQLParsecutor(insertCommand);
+		// 	fp.execute();
+		// }
 	}
 
 	public static String [] tokenizeInput (String input) {

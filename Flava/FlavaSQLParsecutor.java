@@ -25,7 +25,7 @@ public class FlavaSQLParsecutor {
 	static ArrayList <String> validObjects = new ArrayList<String>(Arrays.asList("database", 
 		"table", "on"));
 	static ArrayList <String> validOptions = new ArrayList<String>(Arrays.asList("index", 
-		"values", "schema"));
+		"values", "schema", "columns"));
 	static ArrayList <String> validOptionParameters = new ArrayList<String>(Arrays.asList("where", "schema"));
 	static ArrayList <String> validDatabaseTypes = new ArrayList<String>(Arrays.asList("long", "double", "char", "string", "boolean"));
 
@@ -74,7 +74,9 @@ public class FlavaSQLParsecutor {
 		}
 	}
 
-	/** The tokenized string array will only have a length of 3, 5, or 7. */
+	/** 
+		The tokenized string array will only have a length of 3, 5, or 7. 
+	*/
 	public static Boolean isValidTokenLength (int length) {
 		return (length == 3 || length == 5 || length == 7);
 	}
@@ -111,9 +113,10 @@ public class FlavaSQLParsecutor {
 				break;
 			case "select" :
 				System.out.println("selecting");
+				select();
 				break;
 			case "insert" :
-				System.out.println("inserting");
+				// System.out.println("inserting");
 				insert();
 				break;
 			case "update" :
@@ -139,7 +142,7 @@ public class FlavaSQLParsecutor {
 			}
 		} 
 		// TODO: Remove
-		System.out.println("Folder path: " + folderPath);
+		// System.out.println("Folder path: " + folderPath);
 		return folderPath;
 	}
 
@@ -209,6 +212,43 @@ public class FlavaSQLParsecutor {
 		}
 	}
 
+	public Boolean columnsAskedForExist () {
+		// TODO: IMPLEMENT
+		return true;
+	}
+
+	public Boolean canValuesAskedForBeParsedAsColumnTypes () {
+		return true;
+	}
+
+	public void select () {
+		// Will want to create a "record" class that maps a the values searched over to the
+		// values desired by the query
+		File table = new File(getFolderPath());
+		
+		if (this.objectType.equals("on") && table.exists() && this.option.equals("columns") &&
+			columnsAskedForExist() && canValuesAskedForBeParsedAsColumnTypes()) {
+			System.out.println("TRYING TO SELECT!");
+			// read the entire table file line by line
+			// grab line, remove columns that are not desired, add string to arraylist probably
+			// without commas; also printout first line with fields that were desired then all
+			// the records that satisfied that
+			File queryFile = new File(getFilePath(".query"));
+
+			try {
+				queryFile.createNewFile();
+				BufferedReader br = new BufferedReader(new FileReader(getFilePath(".data")));
+				String line;
+				while ((line = br.readLine()) != null) {
+				   appendTextToFile(line, ".query");
+				}
+				br.close();
+			} catch (IOException io) {
+
+			}
+		}
+	}
+
 	public void insert () {
 		// Is object == on && does the tableName exist && is the option values &&
 		// are the parameters properly formatted for the table it is being inserted
@@ -216,7 +256,7 @@ public class FlavaSQLParsecutor {
 		File table = new File(getFolderPath());
 		if (this.objectType.equals("on") && table.exists() 
 			&& this.option.equals("values") && areValuesProperlyFormatted()) {
-			System.out.println("WILL INSERT");
+			// System.out.println("WILL INSERT");
 			appendTextToFile(removeParens(this.optionParameter), ".data");
 		} else {
 			Flava.invalidCommand("FlavaSQLParsecutor 222");
@@ -246,13 +286,9 @@ public class FlavaSQLParsecutor {
 	/** Check to see if the values can be inserted */
 	public Boolean areValuesProperlyFormatted () {
 		String [] values = removeParens(this.optionParameter).split("[,\\s]+");
-		Flava.printStringArray(values, "values");
 		String [] schemaTypes = getSchemaTypes(".schema");
-		System.out.println(values.length + " vs. " + schemaTypes.length);
-// for every string value in values, i want to try and parse it as the schemaType
 		if (values.length == schemaTypes.length) {
 			for (int i = 0; i < values.length; i++) {
-				System.out.println(values[i] + " : " + schemaTypes[i]);
 				if (canBeParsedAsSchemaType(values[i], schemaTypes[i])) {
 					continue;
 				} else {
@@ -266,49 +302,37 @@ public class FlavaSQLParsecutor {
 	}
 
 	public Boolean canBeParsedAsSchemaType (String value, String schemaType) {
-		Boolean canBeParsed = false;
-		switch (schemaType) {
-			case "long" : 
-				try {
-					Long longValue = new Long(value);
-					canBeParsed = true;
-				} catch (NumberFormatException nfe) {
-					System.out.println("The value " + value + " could not be inserted as a long!");
-				}
-			break;
-			case "double" :
-				try {
-					Double doubleValue = new Double(value);
-					canBeParsed = true;
-				} catch (NumberFormatException nfe) {
-					System.out.println("The value " + value + " could not be inserted as a double!");
-				}
-			break; 
-			case "char" : 
-				if (value.length() == 1) {
-					canBeParsed = true;
-				} 
-			break;
-			case "string" :
-				// DO NOTHING B/C we're lazy and allow any kind of data in
-				System.out.println("HHHEERRERERE");
-				canBeParsed = true;
-			break;
-			case "boolean" :
-				if ((value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
-					canBeParsed = true;
-				} 
-				break;	
-		}
-		System.out.println("PARSED ? " + canBeParsed);
-		return canBeParsed;
+		if (schemaType.equals("long")) {
+			try {
+				Long longValue = new Long(value);
+				return true;
+			} catch (NumberFormatException nfe) {
+				System.out.println("The value " + value + " could not be inserted as a long!");
+			}
+		} else if (schemaType.equals("double")) {
+			try {
+				Double doubleValue = new Double(value);
+				return true;
+			} catch (NumberFormatException nfe) {
+				System.out.println("The value " + value + " could not be inserted as a double!");
+			}
+		} else if (schemaType.equals("char") && value.length() == 1) {
+			return true;
+		} else if (schemaType.equals("string")) {
+			return true;
+		} else if (schemaType.equals("boolean") && 
+				  (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false"))) {
+			return true;
+		} 
+
+		return false;
 	}
 
 	public String[] getSchemaTypes (String fileType) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(getFilePath(fileType)));
 			String line = br.readLine();
-			System.out.println("LINE : " + line);
+			// System.out.println("LINE : " + line);
 			String [] schema = line.split("[,\\s]+");
 			String [] schemaTypes = new String [(schema.length / 2)];
 
@@ -326,11 +350,11 @@ public class FlavaSQLParsecutor {
 
 	public Boolean isSchemaProperlyFormatted (String schema) {
 		// TODO Remove
-		System.out.println("SCHEMA : " + schema);
+		// System.out.println("SCHEMA : " + schema);
 		String [] nameAndDataType = schema.split("[,\\s]+");
 		for (int i = 0; i < nameAndDataType.length; i++) {
 			// TODO Remove
-			System.out.println(i + " - " + nameAndDataType[i]);
+			// System.out.println(i + " - " + nameAndDataType[i]);
 			if (i % 2 == 1 && !validDatabaseTypes.contains(nameAndDataType[i])) {
 				// TODO Remove
 				System.out.println("PROBS FALSING");
